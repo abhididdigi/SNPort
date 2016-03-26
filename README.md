@@ -33,11 +33,27 @@ List of files available
 3. Many more coming soon!  ( I'm in the process of cleaning a lot of Script Includes, that can a) Read XML and CSV files from MID Server b) Post the data into an Import set c) Apply filter to pull selected files.
 
 
+Debug options
+=============
+
+1. By setting `this.debug` to true, debug messages will be sent into the `agent.log.0` file present in the `logs` folder of `agent`.
+2. Debug messages are on by default.
+
+
+Invocation
+==========
+
+1. Example snippetts on how to call various MID Server Script Includes is present in the Sample Invocation folder.
+
+
 TODO:
 ====
 
 1. Write Tests.
 2. Write examples.
+
+
+
 
 
 
