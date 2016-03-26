@@ -28,6 +28,10 @@ For tutorial on installing Jar files, here is an [Awesome Video] (https://www.yo
 List of files available
 =======================
 
+####PT_WriteClasses
+
+All the files in this folder will contain Script Include that write from ServiceNow into the MID server.
+
 1. PT_PostFile.js => A blazingly fast MID Server SI to move any file from ServiceNow into MID Server. If the folder that's passed is not present, creates one.
 2. PT_CSVWriter.js => A blazingly fast MID Server SI to create CSV files given an array of arrays (of data)
 3. Many more coming soon!  ( I'm in the process of cleaning a lot of Script Includes, that can a) Read XML and CSV files from MID Server b) Post the data into an Import set c) Apply filter to pull selected files.
