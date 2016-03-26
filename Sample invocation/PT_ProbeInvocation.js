@@ -1,7 +1,8 @@
-var jp = new JavascriptProbe(this.record.u_mid_server_name.name);
-jp.addParameter("scheduled_job_run",this.scheduled_job_run.sys_id);
-jp.addParameter("instance_name",gs.getProperty("glide.servlet.uri"));
-jp.setName("PT_PDFFIleIpoter");
-jp.setJavascript("var ptf = new PT_FileImporter(); ptf.MID_HandleFiles()");
-var probe_sys_id = probe.create();
-		
+var jp = new JavascriptProbe("mid_server_name");
+jp.addParameter("file_name","name_of_file.csv");
+jp.addParameter("folder_name","folder_location");
+jp.addParameter("csv_content",new JSON().encode([["Name","Class","Section"],["Abhiram","CSE","A"],["Jon Doe","CSE","B"]]));
+
+jp.setName("PT_CSVWriter");
+jp.setJavascript("var ptf = new PT_CSVWriter(); ptf. write()");
+var probe_sys_id = jp.create();
