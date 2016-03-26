@@ -24,7 +24,8 @@ PT_CSVWriter.prototype = {
 
         }
         try {
-            this.open_csv = new Packages.com.opencsv.CSVWriter();
+            this.open_csv = Packages.com.opencsv.CSVWriter;
+            this.file_writer = Packages.java.io.FileWriter;
         }catch(e){
             var error = "Error with initializing Open CSV : " + e
             this._log(error);
@@ -35,20 +36,26 @@ PT_CSVWriter.prototype = {
 
     write:function(){
         var writer;
+        this._log("1. Inside the write function");
         try{
             if(!this._folderCheck(this.probe_params["folder_name"])){
-                var error = "Folder not found. " + e
+
+                var error = "Error with folder creation. ";
+
                 this._log(error);
                 this.debug_array.push(error)
             }else{
                 // create the CSV file.
                 var final_file_path = this.probe_params.folder_name + this.probe_params.file_name;
-                writer = this.open_csv(final_file_path);
+
+                writer = new this.open_csv(new this.file_writer(final_file_path),this.probe_params.seperator);
+                this._log(this.probe_params.csv_content);
                 //write the entries.
                 var entries = JSON2.parse(this.probe_params.csv_content);
-
+                this._log("CSV Content ::" + this.probe_params.csv_content);
                 for(var entry = 0, len = entries.length; entry<len; entry ++){
-                    writer.writeNext(entries[entry])
+
+                    writer.writeNext(entries[entry]);
                 }
 
             }
@@ -77,8 +84,16 @@ PT_CSVWriter.prototype = {
         probe_params.file_name = probe.getParameter("file_name") + '';
         probe_params.folder_name = this._cleanFolderPath(probe.getParameter("folder_name")) + '';
         probe_params.csv_content = probe.getParameter("csv_content") + '';
-        probe_params.seperator = probe.getParameter("seperator") == ""?";":probe.getParameter("seperator");
-        probe_params.seperator += ''; // making sure we have a string and not java.lang.string.
+        var seperator = probe.getParameter("seperator")+'';
+        this._log("the seperatoe is : " + seperator);
+        if(JSUtil.nil(seperator) || seperator == 'null'){
+            this._log(seperator)
+            seperator = ",";
+        }
+
+
+
+        probe_params.seperator = seperator;
 
         return probe_params;
     },
@@ -110,15 +125,17 @@ PT_CSVWriter.prototype = {
         try{
             if(folder.isDirectory()){
                 // the folder is already present. Paste the file.
+                this._log("2. Folder already present.");
                 return true;
             }else{
                 // create that folder.
-
+                this._log("2.1> Folder already not present.");
                 folder = this.FileUtils.forceMkdir(folder);
                 return true;
             }
         }catch(e){
             this._log("There is an error message with PostFile function. Something wrong with the folder creation = " + e )
+            this._log("2.2 Folder creation unsuccessful.");
             return false;
         }
 
