@@ -47,7 +47,7 @@ Debug options
 Invocation
 ==========
 
-1. Example snippetts on how to call various MID Server Script Includes is present in the Sample Invocation folder.
+1. Example snippetts on how to call various MID Server Script Includes are present in the Sample Invocation folder.
 
 
 TODO:
