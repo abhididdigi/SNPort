@@ -1,24 +1,20 @@
 // 1. Check the protocol.
 // 2. Check the type of the file_selection_criteria.
 // 3. Depending on the file selection criteria,
-
 //      3.2 : Once we get file(s), iterate over them; and based on the transformation_type,
 //      3.3 : For each file if the transformation_type == "Import and Transform", iterate over each row of the XML
 //              do custom handling, translation and POST it back to the ServiceNow instance using import set Webservice.
 //      3.3.1 Write a function to handle posting the data or file.
 //      3.3.2 For every file also write an entry in Scheduled Job Run Log table using the API created.
 //      3.3.3 If everything is fine, update the Scheduled Job Runs as Success, else failure.
-
 //      3.4 For the transformation_type == "Tranfer file", then
 //      3.4.1 use the same POST transform to post the file using the API created. Remember the API should execute the
 //              script portion of the Scheduled Job when the data is sent back.
-
-
 var PT_FileImporter = Class.create();
 
 PT_FileImporter.prototype = {
 
-    initialize:function(){
+    initialize: function() {
 
         //read all probe parameters.
         this.probeParameters = this._getProbeParameters();
@@ -51,7 +47,7 @@ PT_FileImporter.prototype = {
      MID Server handling functions.
      */
 
-    MID_HandleFiles:function(){
+    MID_HandleFiles: function() {
 
         try {
             var fileListArray = this.MID_getListOfFiles();
@@ -72,7 +68,7 @@ PT_FileImporter.prototype = {
 
             } else if (transformationType == "file_transfer") {
                 this._log("Transformation Type" + transformationType);
-                this._log("List of tiles " + fileListArray + "length = "+ fileListArray.length);
+                this._log("List of tiles " + fileListArray + "length = " + fileListArray.length);
                 var receivedObj = JSON2.parse(this.probeParameters.args);
                 var filesAttached = receivedObj["existing_file_list"] + '';
 
@@ -87,7 +83,7 @@ PT_FileImporter.prototype = {
 
                 // Kenexa error if no attachments found
                 if (operation == 'insert' && fileListArray.length == 0) {
-                    this.prepareError("kenexa","This is an insert operation but no files found.");
+                    this.prepareError("kenexa", "This is an insert operation but no files found.");
                     this.error_log.push("Kenexa :: during an insert operation no files were found.")
                 }
 
@@ -108,9 +104,9 @@ PT_FileImporter.prototype = {
                         this._log("iterating...")
                         //return this.postFile(file);
                         var fileResponse = this.postFile(file);
-                        if(fileResponse["status"] == -1){
+                        if (fileResponse["status"] == -1) {
                             var message = fileResponse["message"];
-                            this.prepareError("log",message);
+                            this.prepareError("log", message);
                         }
                         postResponse.push(fileResponse);
                     }
@@ -118,9 +114,9 @@ PT_FileImporter.prototype = {
 
                 return JSON2.stringify(postResponse);
             }
-        }catch(e){
-            this.error_log += "Error in the MID handle files: " +e;
-        }finally{
+        } catch (e) {
+            this.error_log += "Error in the MID handle files: " + e;
+        } finally {
             this._log(this.error_log.join("\n"));
             this._log(this.log_message.join("\n"));
         }
@@ -128,9 +124,9 @@ PT_FileImporter.prototype = {
 
     // @lifted from  : Entire code lifted from MID Server import facility and added a file to check for Regexp.
 
-    MID_getListOfFiles:function(){
+    MID_getListOfFiles: function() {
 
-        try{
+        try {
             //Get the list of files that we will actually process (depending on chosen setting this may not be all files in the directory)
             this._log("Folder location" + this.probeParameters.folder_location);
             var targetFile = new Packages.java.io.File(this.probeParameters.folder_location);
@@ -200,7 +196,7 @@ PT_FileImporter.prototype = {
                     fileListArray = targetFile.listFiles(fileFilter);
                 }
                 //Here we check if mode of operation is "file name containing regular expression"
-                else if(this.probeParameters.file_selection_criteria == "reg_exp"){
+                else if (this.probeParameters.file_selection_criteria == "reg_exp") {
                     jsFileFilter = {
                         accept: function(fileObject, fileName) {
                             var re = new RegExp(jsFileID);
@@ -235,7 +231,7 @@ PT_FileImporter.prototype = {
                         }
                     };
                     fileFilter = new Packages.java.io.FilenameFilter(jsFileFilter);
-                    fileFilter.accept(targetFile,jsFileID);
+                    fileFilter.accept(targetFile, jsFileID);
 
                     fileListArray = targetFile.listFiles(fileFilter);
                 }
@@ -244,9 +240,12 @@ PT_FileImporter.prototype = {
             this._log(fileListArray);
             fileListArray.sort();
             return fileListArray;
-        }catch(e){
+        } catch (e) {
             this._log("Error in the MID handle files. ");
-            return {"status":"-1","message":e.getMessage()};
+            return {
+                "status": "-1",
+                "message": e.getMessage()
+            };
         }
     },
 
@@ -260,15 +259,15 @@ PT_FileImporter.prototype = {
     //takes a files, iterates over each row and create records.
     //supports only XML for now. XML need custom handling.
     //called when transformationType == "import_and_transform"
-    handleFiles:function(file){
+    handleFiles: function(file) {
         //3.3.2
 
         var file_extension = this._getFileExtension(file.getName());
         this._log("File extension is" + file_extension);
 
-        if(file_extension == "xml"){
+        if (file_extension == "xml") {
             this._processXML(file)
-        }else if(file_extension == "csv"){
+        } else if (file_extension == "csv") {
             this._processCSV(file)
         }
     },
@@ -277,7 +276,7 @@ PT_FileImporter.prototype = {
      functions to convert a file into base64 and post it back.
      */
 
-    postFile:function(file){
+    postFile: function(file) {
         // 1. open the file.
         // 2. Convert the file to base64
         // 3. post it back.
@@ -285,7 +284,7 @@ PT_FileImporter.prototype = {
         //(1) open the file.
         //readFileToByteArray
         this._log("inside the post File function");
-        var attachmentBytes  = this.FileUtils.readFileToByteArray(file);
+        var attachmentBytes = this.FileUtils.readFileToByteArray(file);
 
         //(2) Base64 encode.
         var base64_attach = this.StringUtil.base64Encode(attachmentBytes);
@@ -293,26 +292,30 @@ PT_FileImporter.prototype = {
         var details = JSON2.parse(this.probeParameters.args); //Convert string to object
 
         var o = {};
-        o["table_name"] = details["table"]+'';
-        o["key"] = details["currentRecord"]+'';
-        o["base64_encoded"] = base64_attach+'';
-        o["integration"] =details["integration"]+'';
-        o["file_name"] = file.getName()+'';
-        o["file_ext"] = this.probeParameters.file_extension +'';
-        o["column_name"] = details["column_name"]+'';
-        o["content_type"] = this.probeParameters.content_type + '' ;
+        o["table_name"] = details["table"] + '';
+        o["key"] = details["currentRecord"] + '';
+        o["base64_encoded"] = base64_attach + '';
+        o["integration"] = details["integration"] + '';
+        o["file_name"] = file.getName() + '';
+        o["file_ext"] = this.probeParameters.file_extension + '';
+        o["column_name"] = details["column_name"] + '';
+        o["content_type"] = this.probeParameters.content_type + '';
         o["encrypted"] = "true"
         o["operation"] = details["operation"]
         return this.callAPI(o);
     },
 
-    prepareError:function(integration_name,message){
+    prepareError: function(integration_name, message) {
         this._log("inside prepare error" + message);
-        if(integration_name == "log"){
+        if (integration_name == "log") {
             // it just logs to the system.
-            var msg = " There is an exception in the MIDServer Script Include" +  message;
-            this.postError({"message":msg,"integration":"MIDSERVER_related_error","log_table_name":"u_ob_virtual_log"});
-        }else if(integration_name == "kenexa"){
+            var msg = " There is an exception in the MIDServer Script Include" + message;
+            this.postError({
+                "message": msg,
+                "integration": "MIDSERVER_related_error",
+                "log_table_name": "u_ob_virtual_log"
+            });
+        } else if (integration_name == "kenexa") {
             // prepare the error for kenexa.
             this._log("The integration anme" + integration_name);
             var details = JSON2.parse(this.probeParameters.args); //Convert string to object
@@ -323,8 +326,8 @@ PT_FileImporter.prototype = {
             o["message"] = message;
             o["integration"] = "kenexa";
 
-            o["table_name"] = details["table"]+'';
-            o["column_name"] = details["column_name"]+'';
+            o["table_name"] = details["table"] + '';
+            o["column_name"] = details["column_name"] + '';
 
             o["enc"] = o["column_name"] + "=" + details["currentRecord"];
             this._log("the details array" + JSON2.stringify(details))
@@ -338,12 +341,12 @@ PT_FileImporter.prototype = {
         }
     },
 
-    postError:function(obj){
+    postError: function(obj) {
         var url = this.probeParameters.instance_url + 'port_file_error.do?action=' + obj["integration"];
 
         var str = JSON2.stringify(obj); //Convert object to string
 
-        var response = this.API_wrapperMakeCallReusable("POST",str,url);
+        var response = this.API_wrapperMakeCallReusable("POST", str, url);
         this._log("The response returned in error" + JSON2.stringify(response));
         return response;
     },
@@ -351,14 +354,14 @@ PT_FileImporter.prototype = {
 
 
 
-    callAPI :function(obj){
+    callAPI: function(obj) {
         var url = this.probeParameters.instance_url + 'port_document_entry.do?action=' + obj["integration"];
 
         var str = JSON2.stringify(obj); //Convert object to string
 
-        var response = this.API_wrapperMakeCallReusable("POST",str,url);
-        if(!JSUtil.nil(response["status"]) && response["status"] == -1){
-            this.prepareError("log",response["message"]);
+        var response = this.API_wrapperMakeCallReusable("POST", str, url);
+        if (!JSUtil.nil(response["status"]) && response["status"] == -1) {
+            this.prepareError("log", response["message"]);
         }
 
         this._log(response);
@@ -376,7 +379,7 @@ PT_FileImporter.prototype = {
     // body : if it's a post, then body will be not empty
     // url : the URL to which the function is being called.
 
-    API_wrapperMakeCallReusable:function(method,body,url){
+    API_wrapperMakeCallReusable: function(method, body, url) {
 
         try {
             var http_client = this.API_PrepareHTTPClient();
@@ -391,15 +394,18 @@ PT_FileImporter.prototype = {
             var response = this.API_callRestService(http_client, prepareMethod);
 
             return response;
-        }catch(e){
+        } catch (e) {
             this.error_log.push("Error in API Wrapper make call reusable. " + e)
-            return {"status":"-1","message":"Error in API_weapperMakeCallReusable. "+e}
+            return {
+                "status": "-1",
+                "message": "Error in API_weapperMakeCallReusable. " + e
+            }
         }
     },
 
-    API_wrapperMakeCall:function(method,body,params){
+    API_wrapperMakeCall: function(method, body, params) {
 
-        if(JSUtil.nil(params["table_name"])){
+        if (JSUtil.nil(params["table_name"])) {
 
             return;
         }
@@ -407,25 +413,25 @@ PT_FileImporter.prototype = {
         var table_name = params["table_name"];
         var http_client = this.API_PrepareHTTPClient();
 
-        if(JSUtil.type_of(body) != 'string'){ // check to see if the body being passed is a string. If it is NOT a string,
+        if (JSUtil.type_of(body) != 'string') { // check to see if the body being passed is a string. If it is NOT a string,
             // then convert it into a string.
             body = JSON2.stringify(body)
         }
 
-        var instanceConnectionURL = this.API_getInstanceConnectionURL(method,table_name,params);
+        var instanceConnectionURL = this.API_getInstanceConnectionURL(method, table_name, params);
         var prepareMethod = '';
-        if(method == "POST"){
-            prepareMethod = this.API_prepareMethod(method,instanceConnectionURL,body);
-        }else{
-            prepareMethod = this.API_prepareMethod(method,instanceConnectionURL,body);
+        if (method == "POST") {
+            prepareMethod = this.API_prepareMethod(method, instanceConnectionURL, body);
+        } else {
+            prepareMethod = this.API_prepareMethod(method, instanceConnectionURL, body);
         }
 
-        var response = this.API_callRestService(http_client,prepareMethod);
+        var response = this.API_callRestService(http_client, prepareMethod);
 
         return response;
     },
 
-    API_PrepareHTTPClient:function(){
+    API_PrepareHTTPClient: function() {
         //taken from  APP.
         var probeParams = this.probeParameters;
         var httpClient = new Packages.org.apache.commons.httpclient.HttpClient();
@@ -434,19 +440,19 @@ PT_FileImporter.prototype = {
         return httpClient;
     },
 
-    API_getInstanceConnectionURL: function(method,table_name,params) {
+    API_getInstanceConnectionURL: function(method, table_name, params) {
 
         var instanceConnectionURL = this.probeParameters.instance_url;
 
-        if(method == 'POST' && table_name == "u_port_scheduled_run"){
+        if (method == 'POST' && table_name == "u_port_scheduled_run") {
             // if method == POST and the table is port scheduled run, then the URL for creating a PORT run.
-            if(params["type"] == "insert") {
+            if (params["type"] == "insert") {
                 instanceConnectionURL = this.probeParameters.instance_url + "port_api.do?action=scheduled_job_run_log/insert";
-            }else if(params["type"]   == "update"){
+            } else if (params["type"] == "update") {
                 instanceConnectionURL = this.probeParameters.instance_url + "port_api.do?action=scheduled_job_run_log/update";
             }
-        }else if(method == "POST" && params["type"] == "import_set"){
-            instanceConnectionURL  = this.probeParameters.instance_url + "api/now/import/" + table_name;
+        } else if (method == "POST" && params["type"] == "import_set") {
+            instanceConnectionURL = this.probeParameters.instance_url + "api/now/import/" + table_name;
         }
 
         // TODO: For attachments invoke the attachment script. There is no API endpoint for that, yet.
@@ -454,17 +460,17 @@ PT_FileImporter.prototype = {
         return instanceConnectionURL;
     },
 
-    API_prepareMethod:function(method,instanceConnectionURL,requestBody){
-        if(method == "POST"){
+    API_prepareMethod: function(method, instanceConnectionURL, requestBody) {
+        if (method == "POST") {
             var postObj = new Packages.org.apache.commons.httpclient.methods.PostMethod(instanceConnectionURL);
             postObj.addRequestHeader("Accept", "application/json");
             postObj.addRequestHeader("Content-Type", "application/json");
             postObj.setRequestEntity(new Packages.org.apache.commons.httpclient.methods.StringRequestEntity(requestBody));
             return postObj;
-        }else if(method == "GET"){
+        } else if (method == "GET") {
             var getMethod = new Packages.org.apache.commons.httpclient.methods.GetMethod(instanceConnectionURL)
-            getMethod.addRequestHeader("Accept","application/json");
-            getMethod.addRequestHeader("Content-Type","application/json");
+            getMethod.addRequestHeader("Accept", "application/json");
+            getMethod.addRequestHeader("Content-Type", "application/json");
             return getMethod;
         }
     },
@@ -472,38 +478,46 @@ PT_FileImporter.prototype = {
     API_callRestService: function(httpclient, method) {
         var exception = '';
         try {
-            var statusCode = ''+httpclient.executeMethod(method);
+            var statusCode = '' + httpclient.executeMethod(method);
 
 
             if (statusCode == Packages.org.apache.commons.httpclient.HttpStatus.SC_OK) {
-                var responseBody = ''+method.getResponseBodyAsString();
+                var responseBody = '' + method.getResponseBodyAsString();
 
 
-                return {"status":statusCode,"responseBody":responseBody}
+                return {
+                    "status": statusCode,
+                    "responseBody": responseBody
+                }
+            } else {
+
+                return {
+                    "status": statusCode,
+                    "responseBody": responseBody
+                }
             }
-            else{
-
-                return {"status":statusCode,"responseBody":responseBody}
-            }
-        }catch(e){
+        } catch (e) {
             exception = e;
             this.error_log.push(e);
-            return {"status":-1,"responseBody":"Exception in the Rest Service Call."+e};
-        }finally{
+            return {
+                "status": -1,
+                "responseBody": "Exception in the Rest Service Call." + e
+            };
+        } finally {
             method.releaseConnection(); // releasing the connection at all costs..
 
         }
     },
 
 
-// -----------------------------------------------------------------------------------------------------------------
+    // -----------------------------------------------------------------------------------------------------------------
 
 
     /*
      Utility functions..
      */
 
-    _getProbeParameters:function(){
+    _getProbeParameters: function() {
 
         var probe_params = {};
         probe_params.instance_url = this._getInstanceBaseURL(probe.getParameter("instance_name"));
@@ -532,7 +546,7 @@ PT_FileImporter.prototype = {
 
 
 
-        if (JSUtil.nil(isHeader) || isHeader == null){
+        if (JSUtil.nil(isHeader) || isHeader == null) {
             isHeader = false;
         }
 
@@ -555,22 +569,19 @@ PT_FileImporter.prototype = {
 
         if (ext == 'doc') {
             type = "application/msword";
-        }
-        else if (ext == 'docx') {
+        } else if (ext == 'docx') {
             type = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
-        }
-        else if (ext == 'pdf') {
+        } else if (ext == 'pdf') {
             type = "application/pdf";
-        }
-        else{
+        } else {
             type = "application/octet-stream";
         }
         return type;
     },
 
-    _log:function(message){
+    _log: function(message) {
 
-        if(this.debug == false){
+        if (this.debug == false) {
             return;
         }
 
@@ -578,37 +589,37 @@ PT_FileImporter.prototype = {
 
     },
 
-    get_log:function(){
+    get_log: function() {
         return this.debugString;
     },
 
-    _calculateArchiveLocation:function(loc_name){
+    _calculateArchiveLocation: function(loc_name) {
         this._log("ENTERING _calculateArchiveLocation");
         var loc_array = loc_name.split("\\");
-        loc_array[loc_array.length - 2]   = "archive";
+        loc_array[loc_array.length - 2] = "archive";
         this._log("RETURNING FROM _calculateArchiveLocation");
         return loc_array.join("\\");
 
     },
 
-    _getFileExtension:function(name){
+    _getFileExtension: function(name) {
 
         name = '' + name;
         var arr = name.split("."); // split it by the dot.
         var len = arr.length;
-        return arr[len-1];
+        return arr[len - 1];
     },
 
-    _processXML:function(file){
+    _processXML: function(file) {
         //read file contents.
 
         try {
             var table_name = this.probeParameters.config_importSetName; // for processing the XML and CSV, the table is
             // ALWAYS import setName.
 
-            var jsonMapping = this.probeParameters["config_jsonMapping"]+'';
+            var jsonMapping = this.probeParameters["config_jsonMapping"] + '';
 
-            var columnMapping = this.probeParameters["config_columnMapping"] +'';
+            var columnMapping = this.probeParameters["config_columnMapping"] + '';
 
             var columnMappingJSON = JSON2.parse(columnMapping);
 
@@ -618,12 +629,11 @@ PT_FileImporter.prototype = {
 
 
 
-
             var xmlhelp = new XMLHelper(file_contents);
             var obj = xmlhelp.toObject();
             //JSONMapping should point you back to an array or an object.
 
-            if(!JSUtil.nil(jsonMapping))
+            if (!JSUtil.nil(jsonMapping))
                 var resultingJSON = this.getPattern(obj, jsonMapping);
             else
                 resultingJSON = obj;
@@ -657,11 +667,11 @@ PT_FileImporter.prototype = {
 
                         var response = this.API_wrapperMakeCall("POST", JSON2.stringify(o), configuration_params); // TODO: check to see if you need to string or an object.
 
-                        if (response.status == "-1" || !(response.status == Packages.org.apache.commons.httpclient.HttpStatus.SC_OK ||response.status == Packages.org.apache.commons.httpclient.HttpStatus.SC_CREATED)) {
+                        if (response.status == "-1" || !(response.status == Packages.org.apache.commons.httpclient.HttpStatus.SC_OK || response.status == Packages.org.apache.commons.httpclient.HttpStatus.SC_CREATED)) {
 
                             //TODO: Have an error endpoint to log any errors to.
                             var error_message = "There is a problem in the function _ProcessXML. When the information was posted back to import set, ServiceNow returned an error."
-                            this.prepareError("log",error_message);
+                            this.prepareError("log", error_message);
 
                         }
 
@@ -694,39 +704,39 @@ PT_FileImporter.prototype = {
                 //log an error here.
                 var error_log = "Error in _processXML function ::  the resulting object is not an array or object.";
                 this.error_log.push(error_log);
-                this.prepareError("log",error_log);
+                this.prepareError("log", error_log);
             }
-        }catch(e){
+        } catch (e) {
             var error_log = "Error in _processXML function :: " + e;
             this.error_log.push(error_log);
-            this.prepareError("log",error_log)
+            this.prepareError("log", error_log)
 
         }
 
     },
 
-    _archive:function(file){
-        this._log("ARCHIVAL START"+this.probeParameters["folder_location"]);
+    _archive: function(file) {
+        this._log("ARCHIVAL START" + this.probeParameters["folder_location"]);
         // hardcoding for now.
-        var archive_folder_name = this._calculateArchiveLocation(this.probeParameters["folder_location"] +'') +'';
+        var archive_folder_name = this._calculateArchiveLocation(this.probeParameters["folder_location"] + '') + '';
         this._log("ARCHIVE FOLDER LOCATION" + archive_folder_name);
         var file_archive_folder_name = new Packages.java.io.File(archive_folder_name);
         // moving the file.
-        this.FileUtils.moveToDirectory(file,file_archive_folder_name,true);
+        this.FileUtils.moveToDirectory(file, file_archive_folder_name, true);
 
 
     },
 
 
-    _processCSV:function(file){
+    _processCSV: function(file) {
         this._log("inside process CSV");
-        try{
+        try {
             var table_name = this.probeParameters.config_importSetName; // for processing the XML and CSV, the table is
             // ALWAYS import setName.
 
-            var jsonMapping = this.probeParameters["config_jsonMapping"]+'';
+            var jsonMapping = this.probeParameters["config_jsonMapping"] + '';
 
-            var columnMapping = this.probeParameters["config_columnMapping"] +'';
+            var columnMapping = this.probeParameters["config_columnMapping"] + '';
 
             var columnMappingJSON = JSON2.parse(columnMapping);
             this._log(columnMapping);
@@ -734,103 +744,101 @@ PT_FileImporter.prototype = {
 
 
             // read the CSV files.
-            var reader = new this.csv_reader(new this.file_reader(file),this.probeParameters.seperator);
+            var reader = new this.csv_reader(new this.file_reader(file), this.probeParameters.seperator);
             var count = 0;
 
 
-            while((next_line = reader.readNext()) != null){
+            while ((next_line = reader.readNext()) != null) {
                 var data_json = {};
 
-                if(header == "true" && count == 0){
-                    count ++;
+                if (header == "true" && count == 0) {
+                    count++;
                     continue
                 }
-                for(var key in columnMappingJSON){
+                for (var key in columnMappingJSON) {
 
-                    var value = (columnMappingJSON[key] + '')*1
+                    var value = (columnMappingJSON[key] + '') * 1
 
-                    data_json[key] = next_line[value] +''
+                    data_json[key] = next_line[value] + ''
 
                 }
                 // post the JSON.
-                var import_set_name = this.probeParameters.config_importSetName +''
+                var import_set_name = this.probeParameters.config_importSetName + ''
 
-                var import_set_url = this.probeParameters.instance_url + "api/now/import/"+import_set_name
+                var import_set_url = this.probeParameters.instance_url + "api/now/import/" + import_set_name
                 this._log("Posting to URL " + import_set_url);
 
-                var response = this.API_wrapperMakeCallReusable("POST",JSON2.stringify(data_json),import_set_url);
+                var response = this.API_wrapperMakeCallReusable("POST", JSON2.stringify(data_json), import_set_url);
                 this._log(JSON2.stringify(response));
 
 
-                count ++;
+                count++;
 
             }
             this._archive(file);
 
 
-        }catch(e){
+        } catch (e) {
             var error_log = "Error in Process CSV function" + e;
             this.error_log.push(error_log);
-            this.prepareError("log",error_log);
+            this.prepareError("log", error_log);
         }
 
     },
 
 
 
-    getConfigurationParams:function(method,table_name,type){
+    getConfigurationParams: function(method, table_name, type) {
         var params = {};
         params["table_name"] = table_name + '';
         params["type"] = type + ''; // to specify we need to post to an import set.
         return params;
     },
 
-    getPattern : function(obj,pattern){
+    getPattern: function(obj, pattern) {
 
         pattern = '' + pattern;
-        if(JSUtil.nil(pattern)){
+        if (JSUtil.nil(pattern)) {
             //TODO: log an error;
         }
 
-        if(typeof obj === 'string'){
+        if (typeof obj === 'string') {
             obj = JSON2.parse(obj);
         }
         var fieldNames = pattern.split('.');
 
         var interactiveObject = obj;
-        for(var i = 0, len = fieldNames.length ; i< len; i++){
-            var fieldName = fieldNames[i] +'';
+        for (var i = 0, len = fieldNames.length; i < len; i++) {
+            var fieldName = fieldNames[i] + '';
 
-            var arrayDetected = fieldName.split('[').length == 1? false:true;
-            if(arrayDetected == true){
+            var arrayDetected = fieldName.split('[').length == 1 ? false : true;
+            if (arrayDetected == true) {
                 var lb = fieldName.indexOf('[');
                 var rb = fieldName.indexOf(']');
                 var arrayIndex = fieldName.slice(++lb, rb);
                 var arrayKey = arrayIndex.split("=")[0];
                 var arrayValue = arrayIndex.split("=")[1];
-                var objectString = fieldName.slice(0,lb-1);
+                var objectString = fieldName.slice(0, lb - 1);
                 interactiveObject = interactiveObject[objectString];
-                for(var j=0, jlen = interactiveObject.length; j < jlen ; j++){
+                for (var j = 0, jlen = interactiveObject.length; j < jlen; j++) {
 
-                    if(interactiveObject[j][arrayKey] == arrayValue){
+                    if (interactiveObject[j][arrayKey] == arrayValue) {
 
                         interactiveObject = interactiveObject[j];
                         break;
                     }
                 }
 
-            }else{
+            } else {
 
                 interactiveObject = interactiveObject[fieldName];
             }
         }
 
-        if(typeof interactiveObject === "undefined") return '';
+        if (typeof interactiveObject === "undefined") return '';
 
         return interactiveObject;
     },
-
-
 
 
 
