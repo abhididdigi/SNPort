@@ -81,11 +81,7 @@ PT_FileImporter.prototype = {
                 // 3. For the rest of files left, just make a call to API to pass the base64.
                 // 4. The API is supposed to run the script in the scheduled job.
 
-                // Kenexa error if no attachments found
-                if (operation == 'insert' && fileListArray.length == 0) {
-                    this.prepareError("kenexa", "This is an insert operation but no files found.");
-                    this.error_log.push("Kenexa :: during an insert operation no files were found.")
-                }
+        
 
                 //var list_of_files_from_service_now = filesAttached.split('|');
                 var postResponse = [];
@@ -313,31 +309,8 @@ PT_FileImporter.prototype = {
             this.postError({
                 "message": msg,
                 "integration": "MIDSERVER_related_error",
-                "log_table_name": "u_ob_virtual_log"
+                "log_table_name": "u_log_virtual_log"
             });
-        } else if (integration_name == "kenexa") {
-            // prepare the error for kenexa.
-            this._log("The integration anme" + integration_name);
-            var details = JSON2.parse(this.probeParameters.args); //Convert string to object
-
-            var o = {};
-            o["log_error"] = true;
-            o["log_table_name"] = "u_ob_virtual_log";
-            o["message"] = message;
-            o["integration"] = "kenexa";
-
-            o["table_name"] = details["table"] + '';
-            o["column_name"] = details["column_name"] + '';
-
-            o["enc"] = o["column_name"] + "=" + details["currentRecord"];
-            this._log("the details array" + JSON2.stringify(details))
-            var update_object = {};
-            update_object["u_offerletterstatus"] = "E";
-            update_object["u_attachment_error_input"] = message;
-            o["update_obj"] = update_object;
-
-            this.postError(o);
-
         }
     },
 
